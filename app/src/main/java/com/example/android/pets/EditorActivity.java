@@ -120,6 +120,7 @@ public class EditorActivity extends AppCompatActivity {
         String breedString = mBreedEditText.getText().toString().trim();
         Integer genderInt = mGender;
         String weightString = mWeightEditText.getText().toString().trim();
+        //Convert the weight string into an integer as required by db schema
         Integer weightInt = Integer.parseInt(weightString);
 
         //Gets the data repository in write mode
