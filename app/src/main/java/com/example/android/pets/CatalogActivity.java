@@ -19,6 +19,7 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
@@ -29,14 +30,13 @@ import android.widget.TextView;
 
 import com.example.android.pets.data.PetContract;
 import com.example.android.pets.data.PetContract.PetEntry;
-import com.example.android.pets.data.PetDbHelper;
+
 
 /**
  * Displays list of pets that were entered and stored in the app.
  */
 public class CatalogActivity extends AppCompatActivity {
 
-    private PetDbHelper mDbHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,7 +52,6 @@ public class CatalogActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
-        mDbHelper = new PetDbHelper(this);
 
         displayDatabaseInfo();
     }
@@ -69,10 +68,9 @@ public class CatalogActivity extends AppCompatActivity {
      * the pets database.
      */
     private void displayDatabaseInfo() {
-        // Create and/or open a database to read from it
-        SQLiteDatabase db = mDbHelper.getReadableDatabase();
 
-        //Select the rows for name, breed, gender, weight
+        //Define a projection that specifies which columns from the database
+        //you will be using after the query
         String[] projection = {
                 PetEntry._ID,
                 PetEntry.COLUMN_PET_NAME,
@@ -81,15 +79,14 @@ public class CatalogActivity extends AppCompatActivity {
                 PetEntry.COLUMN_PET_WEIGHT
         };
 
-        //Return rows defined in projection with no filters (so no selection or selectionArgs needed)
-        Cursor cursor = db.query(
-                PetEntry.TABLE_NAME,
-                projection,
+        //Perform a query on the provider using the ContentResolver
+        //Use the {@link PetEntry.CONTENT_URI} to access the pets data
+        Cursor cursor = getContentResolver().query(
+                PetEntry.CONTENT_URI,   //Content URI of the pets table
+                projection,             //Columns to return for each row
                 null,
                 null,
-                null,
-                null,
-                null);
+                null);         //Sort order for the returned rows
 
         // Display the number of rows in the Cursor (which reflects the number of rows in the
         // pets table in the database).
@@ -137,18 +134,23 @@ public class CatalogActivity extends AppCompatActivity {
             cursor.close();
         }
     }
-
+    /**
+     * Helper method to insert hardcoded pet data into the database. For debugging purposes only.
+     */
     private void insertPet(){
-        //Gets the data repository in write mode
-        SQLiteDatabase db = mDbHelper.getWritableDatabase();
-
+        // Create a ContentValues object where column names are the keys,
+        // and Toto's pet attributes are the values.
         ContentValues values = new ContentValues();
         values.put(PetEntry.COLUMN_PET_NAME, "Garfield");
         values.put(PetEntry.COLUMN_PET_BREED, "Tabby");
         values.put(PetEntry.COLUMN_PET_GENDER, PetEntry.GENDER_MALE);
         values.put(PetEntry.COLUMN_PET_WEIGHT, 14);
 
-        db.insert(PetEntry.TABLE_NAME, null, values);
+        // Insert a new row for Garfield into the provider using the ContentResolver.
+        // Use the {@link PetEntry#CONTENT_URI} to indicate that we want to insert
+        // into the pets database table.
+        // Receive the new content URI that will allow us to access Garfield's data in the future.
+        Uri newUri = getContentResolver().insert(PetEntry.CONTENT_URI, values);
 
     }
 
