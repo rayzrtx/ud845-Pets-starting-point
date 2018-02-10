@@ -16,6 +16,7 @@
 package com.example.android.pets;
 
 import android.app.LoaderManager;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.CursorLoader;
 import android.content.Intent;
@@ -29,6 +30,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -63,7 +65,7 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
 
 
         //Find the ListView which will be populated with the pet data
-        ListView petListView = (ListView) findViewById(R.id.list);
+        final ListView petListView = (ListView) findViewById(R.id.list);
 
         // Find and set empty view on the ListView, so that it only shows when the list has 0 items.
         View emptyView = findViewById(R.id.empty_view);
@@ -73,6 +75,27 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
         //There is no pet data yet so pass in null for the Cursor
         mCursorAdapter = new PetCursorAdapter(this, null);
         petListView.setAdapter(mCursorAdapter);
+
+        //Setup click listener on all ListView items
+        petListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+                //Create a new intent to go to EditorActivity when clicked
+                Intent intent = new Intent(CatalogActivity.this, EditorActivity.class);
+
+                //Form the content URI that represents the specific pet that was clicked on by appending
+                //the "id"(passed as input to method) onto the CONTENT_URI
+                //ex: URI = "content://com.example.android.pets/pets/{id}"
+                Uri currentPetUri = ContentUris.withAppendedId(PetEntry.CONTENT_URI, id);
+
+                //Set the URI on the data field of the intent
+                intent.setData(currentPetUri);
+
+                //Launch the EditorActivity to display the data from the Pet that was clicked
+                startActivity(intent);
+            }
+        });
+
 
         //Kick off the loader
         getLoaderManager().initLoader(PET_LOADER, null, this);
