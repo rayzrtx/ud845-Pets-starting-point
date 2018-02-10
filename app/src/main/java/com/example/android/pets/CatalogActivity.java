@@ -15,8 +15,11 @@
  */
 package com.example.android.pets;
 
+import android.app.LoaderManager;
 import android.content.ContentValues;
+import android.content.CursorLoader;
 import android.content.Intent;
+import android.content.Loader;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
@@ -36,7 +39,11 @@ import com.example.android.pets.data.PetContract.PetEntry;
 /**
  * Displays list of pets that were entered and stored in the app.
  */
-public class CatalogActivity extends AppCompatActivity {
+public class CatalogActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
+
+    private PetCursorAdapter mCursorAdapter;
+
+    private static final int PET_LOADER = 0;
 
 
     @Override
@@ -54,40 +61,6 @@ public class CatalogActivity extends AppCompatActivity {
             }
         });
 
-        displayDatabaseInfo();
-    }
-
-    //Refresh after user returns to activity after entering new pet info and has saved
-    @Override
-    protected void onStart() {
-        super.onStart();
-        displayDatabaseInfo();
-    }
-
-    /**
-     * Temporary helper method to display information in the onscreen TextView about the state of
-     * the pets database.
-     */
-    private void displayDatabaseInfo() {
-
-        //Define a projection that specifies which columns from the database
-        //you will be using after the query
-        String[] projection = {
-                PetEntry._ID,
-                PetEntry.COLUMN_PET_NAME,
-                PetEntry.COLUMN_PET_BREED,
-                PetEntry.COLUMN_PET_GENDER,
-                PetEntry.COLUMN_PET_WEIGHT
-        };
-
-        //Perform a query on the provider using the ContentResolver
-        //Use the {@link PetEntry.CONTENT_URI} to access the pets data
-        Cursor cursor = getContentResolver().query(
-                PetEntry.CONTENT_URI,   //Content URI of the pets table
-                projection,             //Columns to return for each row
-                null,
-                null,
-                null);         //Sort order for the returned rows
 
         //Find the ListView which will be populated with the pet data
         ListView petListView = (ListView) findViewById(R.id.list);
@@ -96,12 +69,17 @@ public class CatalogActivity extends AppCompatActivity {
         View emptyView = findViewById(R.id.empty_view);
         petListView.setEmptyView(emptyView);
 
-        //Set up adapter to create a list item for each row of pet data in the Cursor
-        PetCursorAdapter petAdapter = new PetCursorAdapter(this, cursor);
-        //Attach the adapter to the ListView
-        petListView.setAdapter(petAdapter);
+        //Setup an Adapter to create a list item for each row of pet data in the Cursor.
+        //There is no pet data yet so pass in null for the Cursor
+        mCursorAdapter = new PetCursorAdapter(this, null);
+        petListView.setAdapter(mCursorAdapter);
+
+        //Kick off the loader
+        getLoaderManager().initLoader(PET_LOADER, null, this);
 
     }
+
+
     /**
      * Helper method to insert hardcoded pet data into the database. For debugging purposes only.
      */
@@ -137,12 +115,43 @@ public class CatalogActivity extends AppCompatActivity {
             // Respond to a click on the "Insert dummy data" menu option
             case R.id.action_insert_dummy_data:
                 insertPet();
-                displayDatabaseInfo();
             // Respond to a click on the "Delete all entries" menu option
             case R.id.action_delete_all_entries:
                 // Do nothing for now
                 return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
+
+        //Define a projection that specifies which columns from the database
+        //you will be using after the query
+        String[] projection = {
+                PetEntry._ID,
+                PetEntry.COLUMN_PET_NAME,
+                PetEntry.COLUMN_PET_BREED
+        };
+
+        //This loader will execute the ContentProvider's query method on a background thread
+        return new CursorLoader(this,   //Parent Activity context
+                PetEntry.CONTENT_URI,           //Provider content URI to query
+                projection,                     //Columns to include in the resulting Cursor
+                null,
+                null,
+                null);
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor petData) {
+        //update {@link PetCursorAdapter} with this new cursor containing updated pet data
+        mCursorAdapter.swapCursor(petData);
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+        //Called when pet data needs to be deleted
+        mCursorAdapter.swapCursor(null);
     }
 }
