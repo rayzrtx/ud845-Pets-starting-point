@@ -149,18 +149,31 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         // Use trim to eliminate leading or trailing white space
         String nameString = mNameEditText.getText().toString().trim();
         String breedString = mBreedEditText.getText().toString().trim();
-        Integer genderInt = mGender;
         String weightString = mWeightEditText.getText().toString().trim();
         //Convert the weight string into an integer as required by db schema
-        Integer weightInt = Integer.parseInt(weightString);
+        Integer weightInt = 0;
+        if (!TextUtils.isEmpty(weightString)){
+            weightInt = Integer.parseInt(weightString);
+        }
 
-        // Create a ContentValues object where column names are the keys,
-        // and pet attributes from the editor are the values.
-        ContentValues values = new ContentValues();
-        values.put(PetEntry.COLUMN_PET_NAME, nameString);
-        values.put(PetEntry.COLUMN_PET_BREED, breedString);
-        values.put(PetEntry.COLUMN_PET_GENDER, genderInt);
-        values.put(PetEntry.COLUMN_PET_WEIGHT, weightInt);
+        if (TextUtils.isEmpty(nameString) && TextUtils.isEmpty(breedString) && TextUtils.isEmpty(weightString)
+                && mGender == PetEntry.GENDER_UNKNOWN) {
+            return;
+        }
+            // Create a ContentValues object where column names are the keys,
+            // and pet attributes from the editor are the values.
+            ContentValues values = new ContentValues();
+            values.put(PetEntry.COLUMN_PET_NAME, nameString);
+            values.put(PetEntry.COLUMN_PET_BREED, breedString);
+            values.put(PetEntry.COLUMN_PET_GENDER, mGender);
+            // If the weight is not provided by the user, don't try to parse the string
+            // into an integer value. Use 0 by default.
+            int weight = 0;
+            if (!TextUtils.isEmpty(weightString)){
+                //Convert the weight string into an integer as required by db schema
+                weight = Integer.parseInt(weightString);
+            }
+            values.put(PetEntry.COLUMN_PET_WEIGHT, weight);
 
 
         //If the intent does NOT contain a Pet URI (null) then we know we are creating a new pet
