@@ -33,6 +33,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.android.pets.data.PetContract;
 import com.example.android.pets.data.PetContract.PetEntry;
@@ -46,6 +47,7 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
     private PetCursorAdapter mCursorAdapter;
 
     private static final int PET_LOADER = 0;
+
 
 
     @Override
@@ -141,6 +143,7 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
             // Respond to a click on the "Delete all entries" menu option
             case R.id.action_delete_all_entries:
                 // Do nothing for now
+                deleteAllPets();
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -176,5 +179,21 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
     public void onLoaderReset(Loader<Cursor> loader) {
         //Called when pet data needs to be deleted
         mCursorAdapter.swapCursor(null);
+    }
+    private void deleteAllPets(){
+        if (PetEntry.CONTENT_URI != null){
+            // Call the ContentResolver to delete the pet at the given content URI.
+            // Pass in null for the selection and selection args because the mAllPetsUri
+            // content URI already identifies all the pets.
+            int rowsAffected = getContentResolver().delete(PetEntry.CONTENT_URI, null, null);
+            // Show a toast message depending on whether or not the delete was successful.
+            if (rowsAffected == 0){
+                // If no rows were deleted, then there was an error with the delete.
+                Toast.makeText(this, getText(R.string.editor_delete_all_pets_failed), Toast.LENGTH_SHORT).show();
+            } else {
+                // Otherwise, the delete was successful and we can display a toast.
+                Toast.makeText(this, getText(R.string.editor_delete_all_pets_successful), Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 }
