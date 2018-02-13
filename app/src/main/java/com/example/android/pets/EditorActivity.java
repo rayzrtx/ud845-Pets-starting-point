@@ -58,16 +58,18 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
     /** EditText field to enter the pet's gender */
     private Spinner mGenderSpinner;
 
-    private PetDbHelper mDbHelper;
 
     /** Content URI for the existing pet (null if it's a new pet) */
     private Uri mCurrentPetUri;
+
+    /** Identifier for the pet data loader */
+    private static final int EXISTING_PET_LOADER = 0;
 
     /**
      * Gender of the pet. The possible values are:
      * 0 for unknown gender, 1 for male, 2 for female.
      */
-    private int mGender = 0;
+    private int mGender = PetEntry.GENDER_UNKNOWN;
 
     /** Boolean flag that keeps track of whether the pet has been edited (true) or not (false) */
     private boolean mPetHasChanged = false;
@@ -106,7 +108,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
             setTitle(getString(R.string.editor_activity_title_edit_pet));
             // Initialize a loader to read the pet data from the database
             // and display the current values in the editor
-            getLoaderManager().initLoader(0, null, this);
+            getLoaderManager().initLoader(EXISTING_PET_LOADER, null, this);
         }
 
 
@@ -123,8 +125,6 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         mBreedEditText.setOnTouchListener(mTouchListener);
         mWeightEditText.setOnTouchListener(mTouchListener);
         mGenderSpinner.setOnTouchListener(mTouchListener);
-
-        mDbHelper = new PetDbHelper(this);
 
         setupSpinner();
 
@@ -165,7 +165,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
             // Because AdapterView is an abstract class, onNothingSelected must be defined
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
-                mGender = 0; // Unknown
+                mGender = PetEntry.GENDER_UNKNOWN; // Unknown
             }
         });
     }
@@ -180,8 +180,12 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         String breedString = mBreedEditText.getText().toString().trim();
         String weightString = mWeightEditText.getText().toString().trim();
 
+        // Check if this is supposed to be a new pet
+        // and check if all the fields in the editor are blank
         if (TextUtils.isEmpty(nameString) && TextUtils.isEmpty(breedString) && TextUtils.isEmpty(weightString)
                 && mGender == PetEntry.GENDER_UNKNOWN) {
+            // Since no fields were modified, we can return early without creating a new pet.
+            // No need to create ContentValues and no need to do any ContentProvider operations.
             return;
         }
             // Create a ContentValues object where column names are the keys,
@@ -321,6 +325,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
                 };
         // Show dialog that there are unsaved changes
         showUnsavedChangesDialog(discardButtonClickListener);
+
     }
 
     @Override
@@ -427,9 +432,12 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
 
     }
 
+    /**
+     * Prompt the user to confirm that they want to delete this pet.
+     */
     private void showDeleteConfirmationDialog() {
         // Create an AlertDialog.Builder and set the message, and click listeners
-        // for the postivie and negative buttons on the dialog.
+        // for the positive and negative buttons on the dialog.
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(R.string.delete_dialog_msg);
         builder.setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {

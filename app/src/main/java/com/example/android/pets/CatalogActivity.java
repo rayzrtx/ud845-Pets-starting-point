@@ -44,8 +44,10 @@ import com.example.android.pets.data.PetContract.PetEntry;
  */
 public class CatalogActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
+    /** Adapter for the ListView */
     private PetCursorAdapter mCursorAdapter;
 
+    /** Identifier for the pet data loader */
     private static final int PET_LOADER = 0;
 
 
@@ -125,6 +127,23 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
 
     }
 
+    private void deleteAllPets(){
+        if (PetEntry.CONTENT_URI != null){
+            // Call the ContentResolver to delete the pet at the given content URI.
+            // Pass in null for the selection and selection args because the mAllPetsUri
+            // content URI already identifies all the pets.
+            int rowsAffected = getContentResolver().delete(PetEntry.CONTENT_URI, null, null);
+            // Show a toast message depending on whether or not the delete was successful.
+            if (rowsAffected == 0){
+                // If no rows were deleted, then there was an error with the delete.
+                Toast.makeText(this, getText(R.string.editor_delete_all_pets_failed), Toast.LENGTH_SHORT).show();
+            } else {
+                // Otherwise, the delete was successful and we can display a toast.
+                Toast.makeText(this, getText(R.string.editor_delete_all_pets_successful), Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu options from the res/menu/menu_catalog.xml file.
@@ -140,9 +159,9 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
             // Respond to a click on the "Insert dummy data" menu option
             case R.id.action_insert_dummy_data:
                 insertPet();
+                return true;
             // Respond to a click on the "Delete all entries" menu option
             case R.id.action_delete_all_entries:
-                // Do nothing for now
                 deleteAllPets();
                 return true;
         }
@@ -153,7 +172,7 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
     public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
 
         //Define a projection that specifies which columns from the database
-        //you will be using after the query
+        //you will be using to display after the query
         String[] projection = {
                 PetEntry._ID,
                 PetEntry.COLUMN_PET_NAME,
@@ -180,20 +199,5 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
         //Called when pet data needs to be deleted
         mCursorAdapter.swapCursor(null);
     }
-    private void deleteAllPets(){
-        if (PetEntry.CONTENT_URI != null){
-            // Call the ContentResolver to delete the pet at the given content URI.
-            // Pass in null for the selection and selection args because the mAllPetsUri
-            // content URI already identifies all the pets.
-            int rowsAffected = getContentResolver().delete(PetEntry.CONTENT_URI, null, null);
-            // Show a toast message depending on whether or not the delete was successful.
-            if (rowsAffected == 0){
-                // If no rows were deleted, then there was an error with the delete.
-                Toast.makeText(this, getText(R.string.editor_delete_all_pets_failed), Toast.LENGTH_SHORT).show();
-            } else {
-                // Otherwise, the delete was successful and we can display a toast.
-                Toast.makeText(this, getText(R.string.editor_delete_all_pets_successful), Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
+
 }
